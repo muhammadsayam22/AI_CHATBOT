@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مجھ سے بات کریں - AI Chat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: #0e1117;
+      color: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+    .container { width: 100%; max-width: 720px; }
+    h1 { font-size: 2rem; margin-bottom: 8px; }
+    .sub { color: #a0a4ab; margin-bottom: 24px; }
+    #chat {
+      background: #161a22;
+      border: 1px solid #2a2f3a;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 200px;
+      max-height: 60vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .msg {
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 85%;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+    .user { background: #1f6feb; align-self: flex-start; }
+    .assistant { background: #2a2f3a; align-self: flex-end; }
+    .error { background: #6e1a1a; align-self: flex-end; color: #ffd7d7; }
+    .placeholder { color: #6b7280; align-self: center; }
+    form { display: flex; gap: 8px; }
+    input {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid #2a2f3a;
+      background: #161a22;
+      color: #fafafa;
+      font-size: 1rem;
+      outline: none;
+    }
+    input:focus { border-color: #1f6feb; }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      background: #1f6feb;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 میرا پہلا AI چیٹ بوٹ</h1>
+    <p class="sub">پائیthon اور گوگل جیمنی (Gemini) کی مدد سے بنایا گیا ہے۔</p>
+    <div id="chat">
+      <div class="msg placeholder">یہاں اپنا سوال لکھیں...</div>
+    </div>
+    <form id="form">
+      <input id="input" type="text" placeholder="یہاں اپنا سوال لکھیں..." autocomplete="off" required />
+      <button id="send" type="submit">بھیجیں</button>
+    </form>
+  </div>
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+    const history = [];
+
+    function addMsg(text, cls) {
+      const div = document.createElement("div");
+      div.className = "msg " + cls;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      chat.querySelector(".placeholder")?.remove();
+      addMsg(message, "user");
+      history.push({ role: "user", content: message });
+      input.value = "";
+      send.disabled = true;
+      const thinking = addMsg("سوچ رہا ہے...", "assistant");
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, history: history.slice(0, -1) }),
+        });
+        const data = await res.json();
+        thinking.remove();
+        if (!res.ok) {
+          addMsg(data.error || "کچھ غلط ہو گیا۔", "error");
+        } else {
+          addMsg(data.reply, "assistant");
+          history.push({ role: "assistant", content: data.reply });
+        }
+      } catch (err) {
+        thinking.remove();
+        addMsg(String(err), "error");
+      } finally {
+        send.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>
