@@ -32,11 +32,19 @@ A simple AI chat bot built with **Streamlit**, **Python**, and **Google Gemini**
 
 ## Add your API key
 
-Open `app.py` and replace the value on line 11:
+Set your Gemini API key as an environment variable (never hardcode it in the file):
 
-```python
-API_KEY = "your-api-key-here"
-```
+- Windows (PowerShell):
+
+  ```powershell
+  $env:GEMINI_API_KEY = "your-api-key-here"
+  ```
+
+- macOS/Linux:
+
+  ```bash
+  export GEMINI_API_KEY="your-api-key-here"
+  ```
 
 ## Run the project
 
